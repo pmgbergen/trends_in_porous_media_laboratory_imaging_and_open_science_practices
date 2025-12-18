@@ -15,7 +15,7 @@ import warnings
 warnings.simplefilter(action="ignore", category=UserWarning)
 warnings.simplefilter(action="ignore", category=pd.errors.SettingWithCopyWarning)
 
-path = Path("../database") / "cited_works.xlsx"
+path = Path("../database") / "cited_works_v2.xlsx"
 save_folder = Path("../results")
 save_folder.mkdir(parents=True, exist_ok=True)
 
@@ -25,7 +25,6 @@ data = data[data["Year"] > 1995]
 
 # ---- 1. Ensure numeric columns ----
 data["Year"] = pd.to_numeric(data["Year"], errors="coerce")
-data["citation"] = pd.to_numeric(data["citation"], errors="coerce")
 
 # -------------------------
 # 2. Create 5-year bins 2021-2025, 2016-2020, etc.
@@ -56,14 +55,10 @@ data["code_availability_final"] = (
 )
 # Data
 data["data_availability_final"] = (
-    data["Data availability"]
+    data["data availability"]
     .str.strip()
     .str.lower()
     .map({"yes": "Open access", "no": "Not open", "on request": "On request"})
-)
-# AI
-data["AI_included_final"] = (
-    data["AI included"].str.strip().str.lower().map({"yes": "Yes", "no": "No"})
 )
 
 
@@ -88,7 +83,6 @@ trend_code = group_trend(
 trend_data = group_trend(
     "data_availability_final", ["Open access", "On request", "Not open"]
 )
-trend_ai = group_trend("AI_included_final", ["Yes", "No"])
 
 # -------------------------
 # 5. Define fixed colors for consistent legend
@@ -309,108 +303,6 @@ fig_data.text(
 )
 plt.tight_layout()
 fig_data.savefig(save_folder / "cited_works_data_availability_pies.png", dpi=dpi)
-plt.show()
-
-# --- AI Included Bar Plot ---
-(trend_ai.div(trend_ai.sum(axis=1), axis=0) * 100).plot(
-    kind="bar",
-    stacked=True,
-    color=[ai_colors[c] for c in trend_ai.columns],
-)
-plt.title("AI Included over time (%)")
-plt.ylabel("Percentage")
-plt.legend(title="AI Included")
-plt.xticks(rotation=0)
-plt.tight_layout()
-plt.show()
-
-# --- Citation vs Paper Availability ---
-fig, ax = plt.subplots(figsize=(8, 5))
-sns.scatterplot(
-    data=data,
-    x="Year",
-    y="citation",
-    hue="paper_availability_final",
-    s=50,
-    palette=paper_colors,
-    ax=ax,
-)
-for period in labels:
-    period_data = data[data["Period"] == period][
-        data["paper_availability_final"] == "Open access"
-    ]
-    if not period_data.empty:
-        sns.regplot(
-            data=period_data,
-            x="Year",
-            y="citation",
-            scatter=False,
-            ax=ax,
-            color="tab:green",
-        )
-    period_data = data[data["Period"] == period][
-        data["paper_availability_final"] == "Not open"
-    ]
-    if not period_data.empty:
-        sns.regplot(
-            data=period_data,
-            x="Year",
-            y="citation",
-            scatter=False,
-            ax=ax,
-            color="tab:red",
-        )
-ax.set_title("Citation vs Year by Paper Availability")
-ax.set_ylabel("Citations")
-ax.set_xlabel("Year")
-ax.set_yscale("log")
-ax.legend(title="Paper Availability")
-plt.tight_layout()
-plt.show()
-
-# --- Citation vs Data Availability ---
-fig, ax = plt.subplots(figsize=(8, 5))
-sns.scatterplot(
-    data=data,
-    x="Year",
-    y="citation",
-    hue="data_availability_final",
-    s=50,
-    palette=data_colors,
-    ax=ax,
-)
-for period in labels:
-    period_data = data[data["Period"] == period][
-        (data["data_availability_final"] == "Open access")
-        | (data["data_availability_final"] == "On request")
-    ]
-    if not period_data.empty:
-        sns.regplot(
-            data=period_data,
-            x="Year",
-            y="citation",
-            scatter=False,
-            ax=ax,
-            color="tab:green",
-        )
-    period_data = data[data["Period"] == period][
-        data["data_availability_final"] == "No"
-    ]
-    if not period_data.empty:
-        sns.regplot(
-            data=period_data,
-            x="Year",
-            y="citation",
-            scatter=False,
-            ax=ax,
-            color="tab:red",
-        )
-ax.set_title("Citation vs Year by Data Availability")
-ax.set_ylabel("Citations")
-ax.set_xlabel("Year")
-ax.set_yscale("log")
-ax.legend(title="Data Availability")
-plt.tight_layout()
 plt.show()
 
 # Bar plot of relative data availability over time (per year)
