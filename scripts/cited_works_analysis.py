@@ -20,7 +20,7 @@ save_folder = Path("../results")
 save_folder.mkdir(parents=True, exist_ok=True)
 
 # 0. Load data
-data = pd.read_excel(path, sheet_name="Sheet2")
+data = pd.read_excel(path, sheet_name="Sheet1")
 data = data[data["Year"] > 1995]
 
 # ---- 1. Ensure numeric columns ----
