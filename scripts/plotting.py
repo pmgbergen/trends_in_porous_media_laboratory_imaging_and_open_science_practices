@@ -49,6 +49,11 @@ parser.add_argument(
     type=float,
     default=1,
 )
+parser.add_argument(
+    "--without-labels",
+    action="store_true",
+    help="Turn off labels in pie charts",
+)
 args = parser.parse_args()
 categories = args.categories
 
@@ -266,8 +271,11 @@ if "year" in df.columns:
                 wedges, texts, autotexts = axes_data[i].pie(
                     values,
                     labels=None,
-                    # autopct=lambda pct: "", # NOTE: Use for printing custom figures.
-                    autopct=lambda pct: f"{pct:.1f}%" if pct > 0 else "",
+                    autopct=lambda pct: ""
+                    if args.without_labels
+                    else f"{pct:.1f}%"
+                    if pct > 0
+                    else "",
                     startangle=90,
                     counterclock=False,
                     textprops={"color": "white", "fontsize": 14},
