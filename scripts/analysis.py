@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+# logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; DataAvailabilityBot/1.0)"}
 
@@ -256,7 +256,19 @@ def determine_category(df):
     if len(active_categories) == 0:
         return ("other",)
     else:
-        category = sorted(active_categories, key=lambda x: x[1], reverse=True)[0][0]
+        priority = {"imaging": 0, "simulation": 1, "other": 2}
+        sorted_categories = sorted(
+            active_categories, key=lambda x: (x[1], priority.get(x[0], 0)), reverse=True
+        )
+        # In case of a tie, down prioritize "other"
+        if (
+            len(sorted_categories) > 1
+            and sorted_categories[0][1] == sorted_categories[1][1]
+            and sorted_categories[0][0] == "other"
+        ):
+            category = sorted_categories[1][0]
+        else:
+            category = sorted_categories[0][0]
 
     # Extract active subcategories
     active_df = active_df.groupby("category").get_group(category)
@@ -498,49 +510,6 @@ def main(
         data_availability_score.append(_data_availability_score)
         data_availability_category.append(_data_availability_category)
 
-        # Make sure the data availability section is not empty if the category is 'computational' or 'experimental'
-        # if np.isclose(_data_availability_score, 1) and category[-1] == "other":
-        #    if re.search("code", data_availability_section[-1], re.I):
-        #        category[-1] = "computational"
-        #        subcategory[-1] = "N/A"
-        #        subcategory2[-1] = "N/A"
-        #        num_redefined += 1
-        # if np.isclose(_data_availability_score, 1) and category[-1] == "other":
-        #    raise ValueError(
-        #        f"Data availability section: {_data_availability_section}.\nCategory: '{category[-1]}' for {url}"
-        #    )
-        # if np.isclose(_data_availability_score, 1.0) and category[-1] == "theoretical":
-        # if _data_availability_score > 0.1 and category[-1] == "theoretical":
-        #    # Identify the work as computational
-        #    category[-1] = "computational"
-        #    subcategory[-1] = "N/A"
-        #    subcategory2[-1] = "N/A"
-        #    num_redefined += 1
-
-        # Debugging
-        if False:
-            print()
-            print("Debugging")
-            print(
-                "Access:",
-                rights_and_permission_score[-1],
-                rights_and_permission_category[-1],
-            )
-            print("Category", category[-1])
-            print("Subcategory", subcategory[-1])
-            print("Subcategory2", subcategory2[-1])
-            print("Keywords:", keywords[-1])
-            print("Classification:", classification[-1])
-            print("Availability score:", data_availability_score[-1])
-            print("Availability category:", data_availability_category[-1])
-
-            print(
-                "rights_and_permissions_section:",
-            )
-            print("Rights and permissions section:", rights_and_permission_section[-1])
-            print("Abstract", abstract[-1])
-            print("Availability section:", data_availability_section[-1])
-
     # Inform on redefinitions
     if num_redefined > 0:
         logging.info(
@@ -566,6 +535,12 @@ def main(
     output_csv.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_csv, index=False)
     logging.info("Wrote results to %s", output_csv)
+
+    # Count the final categories
+    df_by_category = df.groupby("category", observed=False)
+    category_counts = df_by_category.size()
+    print("Final category counts:")
+    print(category_counts)
 
 
 if __name__ == "__main__":
