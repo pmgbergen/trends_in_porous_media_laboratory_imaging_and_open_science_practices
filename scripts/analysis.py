@@ -127,6 +127,40 @@ def extract_matching_keywords(df_list, column_key, column_count):
     return ", ".join(keywords)
 
 
+def extract_supplementary_files_from_html(html_text):
+    excluded_types = [".svg", ".pptx", ".ppt", ".docx", ".doc", ".odt", ".pdf", ""]
+
+    # Find the supplementary material section (case-insensitive)
+    # This is a simple approach; you may want to refine the section extraction
+    section_match = re.search(
+        r"(Electronic supplementary material.*?)(?:<section|\Z)", html_text, re.I | re.S
+    )
+    if not section_match:
+        section_match = re.search(
+            r"(Supplementary information.*?)(?:<section|\Z)", html_text, re.I | re.S
+        )
+    if not section_match:
+        section_match = re.search(
+            r"(Supplementary materials.*?)(?:<section|\Z)", html_text, re.I | re.S
+        )
+    if not section_match:
+        assert False, "No supplementary material section found"
+
+    section_html = section_match.group(1)
+
+    soup = BeautifulSoup(section_html, "html.parser")
+    files = []
+    for a in soup.find_all("a", href=True):
+        label = a.get_text(strip=True)
+        link = a["href"]
+        file_type = Path(link).suffix.lower()
+        if file_type in excluded_types:
+            continue
+        files.append({"label": label, "link": link, "file_type": file_type})
+
+    return files
+
+
 def count_category(df):
     for column in ["category", "subcategory", "subcategory2"]:
         # Make unique and remove NaN categories
@@ -390,6 +424,9 @@ def main(
         if Path(path).exists():
             with open(path, "r", encoding="utf-8") as f:
                 soup = BeautifulSoup(f, "html.parser")
+            with open(path, "r", encoding="utf-8") as f:
+                # Keep unbeautifuled version of html
+                html_text = f.read()
         else:
             # Fetch url
             r = fetch_url(url)
@@ -400,6 +437,8 @@ def main(
             soup = BeautifulSoup(r.text, "html.parser")
             save_soup_to_file(soup, filename=path)
 
+            # Keep unbeautifuled version of html
+            html_text = r.text
         # Identify article type - only continue for "article"
         _article_type = identify_article_type(soup)
         if _article_type != "article":
@@ -451,6 +490,19 @@ def main(
         )
         rights_and_permission_score.append(_rights_and_permission_score)
         rights_and_permission_category.append(_rights_and_permission_category)
+
+        # Check supplementary material - skip if exists
+        supplementary_files = []
+        supplementary_material = extract_section(
+            soup, title=["supplementary", "material"]
+        )
+        if supplementary_material:
+            supplementary_files = extract_supplementary_files_from_html(html_text)
+        supplementary_information = extract_section(
+            soup, title=["supplementary", "information"]
+        )
+        if supplementary_information:
+            supplementary_files = extract_supplementary_files_from_html(html_text)
 
         # Initialize article-specific df for keyword counting
         _df = categories_df.copy()
@@ -507,6 +559,9 @@ def main(
             data_availability_scores_df,
             empty_category="closed access",
         )
+        if _data_availability_score == 0.0 and len(supplementary_files) > 0:
+            _data_availability_score = 1.0
+            _data_availability_category = "open access"
         data_availability_score.append(_data_availability_score)
         data_availability_category.append(_data_availability_category)
 
