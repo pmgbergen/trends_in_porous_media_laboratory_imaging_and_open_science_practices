@@ -54,6 +54,17 @@ parser.add_argument(
     action="store_true",
     help="Turn off labels in pie charts",
 )
+parser.add_argument(
+    "--no-show",
+    action="store_true",
+    help="Do not show plots",
+)
+parser.add_argument(
+    "--dpi",
+    type=int,
+    default=1000,
+    help="DPI for saved figures",
+)
 args = parser.parse_args()
 categories = args.categories
 
@@ -80,8 +91,9 @@ category_counts = df_by_category.size()
 category_fig = plt.figure("Category distribution")
 plt.pie(category_counts, labels=category_counts.index, autopct="%1.1f%%")
 plt.title("Category Distribution")
-category_fig.savefig(output_folder / f"{input_stem}_category_distribution.png", dpi=dpi)
-plt.show()
+# category_fig.savefig(output_folder / f"{input_stem}_category_distribution.png", dpi=args.dpi)
+# plt.show()
+plt.close()
 
 # Display the subcategories
 df_by_subcategory = df.groupby("subcategory", observed=False)
@@ -89,10 +101,11 @@ subcategory_counts = df_by_subcategory.size()
 subcategory_fig = plt.figure("Subcategory distribution")
 plt.pie(subcategory_counts, labels=subcategory_counts.index, autopct="%1.1f%%")
 plt.title("Subcategory Distribution")
-subcategory_fig.savefig(
-    output_folder / f"{input_stem}_subcategory_distribution.png", dpi=dpi
-)
-plt.show()
+# subcategory_fig.savefig(
+#    output_folder / f"{input_stem}_subcategory_distribution.png", dpi=args.dpi
+# )
+# plt.show()
+plt.close()
 
 # --- Subcategory count per year: line plot ---
 subcategory_palette = plt.get_cmap("tab20")
@@ -127,10 +140,11 @@ ax.set_ylabel("Number of submissions")
 ax.set_title("Number of Submissions per Subcategory per Year")
 ax.legend(title="Subcategory", bbox_to_anchor=(1.05, 1), loc="upper left")
 fig_subcat_line.tight_layout()
-fig_subcat_line.savefig(
-    output_folder / f"{input_stem}_subcategory_per_year.png", dpi=dpi
-)
-plt.show()
+# fig_subcat_line.savefig(
+#    output_folder / f"{input_stem}_subcategory_per_year.png", dpi=args.dpi
+# )
+# plt.show()
+plt.close()
 
 # --- Category count per year: line plot ---
 category_year_counts = (
@@ -149,8 +163,9 @@ ax.set_ylabel("Number of submissions")
 ax.set_title("Number of Submissions per Category per Year")
 ax.legend(title="Category", bbox_to_anchor=(1.05, 1), loc="upper left")
 fig_cat_line.tight_layout()
-fig_cat_line.savefig(output_folder / f"{input_stem}_category_per_year.png", dpi=dpi)
-plt.show()
+# fig_cat_line.savefig(output_folder / f"{input_stem}_category_per_year.png", dpi=args.dpi)
+# plt.show()
+plt.close()
 
 # --- Grouped Pie Charts by 5-year Periods: Paper and Data Availability ---
 # Create 5-year bins
@@ -250,9 +265,14 @@ if "year" in df.columns:
             plt.tight_layout()
             fig_paper.savefig(
                 output_folder / f"{input_stem}_paper_availability_pies_{cat}.png",
-                dpi=dpi,
+                bbox_inches="tight",
+                dpi=args.dpi,
             )
-            plt.show()
+            if args.no_show:
+                plt.close()
+            else:
+                plt.show()
+
             # Data availability
             data_order = ["Open access", "On request", "Not open"]
             trend_data = (
@@ -325,9 +345,13 @@ if "year" in df.columns:
             plt.tight_layout()
             fig_data.savefig(
                 output_folder / f"{input_stem}_data_availability_pies_{cat}.png",
-                dpi=dpi,
+                bbox_inches="tight",
+                dpi=args.dpi,
             )
-            plt.show()
+            if args.no_show:
+                plt.close()
+            else:
+                plt.show()
 
     # --- Paper availability over time (all categories lumped, relative) ---
     if paper_col:
@@ -379,9 +403,14 @@ if "year" in df.columns:
         ax.set_xticklabels([str(int(y)) for y in xticks])
         fig.tight_layout()
         fig.savefig(
-            output_folder / f"{input_stem}_paper_availability_per_year.png", dpi=dpi
+            output_folder / f"{input_stem}_paper_availability_per_year.png",
+            bbox_inches="tight",
+            dpi=args.dpi,
         )
-        plt.show()
+        if args.no_show:
+            plt.close()
+        else:
+            plt.show()
 
     # --- Data availability over time (all categories lumped, relative) ---
     if data_col:
@@ -431,9 +460,14 @@ if "year" in df.columns:
         ax.set_xticklabels([str(int(y)) for y in xticks])
         fig.tight_layout()
         fig.savefig(
-            output_folder / f"{input_stem}_data_availability_per_year.png", dpi=dpi
+            output_folder / f"{input_stem}_data_availability_per_year.png",
+            bbox_inches="tight",
+            dpi=args.dpi,
         )
-        plt.show()
+        if args.no_show:
+            plt.close()
+        else:
+            plt.show()
 
 
 def statistics_over_time(df, column, entries):
@@ -535,8 +569,9 @@ def statistics_over_time(df, column, entries):
     plt.title("Article Availability Over Time (Stacked Bar, %)")
     plt.ylim(0, 100)
     plt.tight_layout()
-    fig1.savefig(output_folder / f"{input_stem}_paper_availability.png", dpi=dpi)
-    plt.show()
+    # fig1.savefig(output_folder / f"{input_stem}_paper_availability.png", dpi=args.dpi)
+    # plt.show()
+    plt.close()
 
     # --- Relative Data availability over time (stacked bar, %) ---
     fig2 = plt.figure("Data availability over time (stacked bar, %)")
@@ -583,8 +618,9 @@ def statistics_over_time(df, column, entries):
     plt.title(f"Data Availability | {args.journal}")
     plt.ylim(0, 100)
     plt.tight_layout()
-    fig2.savefig(output_folder / f"{input_stem}_data_availability.png", dpi=dpi)
-    plt.show()
+    # fig2.savefig(output_folder / f"{input_stem}_data_availability.png", dpi=args.dpi)
+    # plt.show()
+    plt.close()
 
 
 statistics_over_time(df, "category", categories)
