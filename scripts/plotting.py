@@ -5,7 +5,8 @@ from pathlib import Path
 
 import argparse
 
-dpi = 1000
+from colors import plain_colors as colors
+
 plt.rcParams.update({"font.size": 20})
 
 parser = argparse.ArgumentParser(description="Visualize article analysis results")
@@ -114,13 +115,13 @@ subcategory_colors = {
     for i, subcat in enumerate(subcategory_counts.index)
 }
 paper_colors = {
-    "Not open": "tab:red",
-    "Open access": "tab:green",
+    "Not open": colors["red"],
+    "Open access": colors["green"],
 }
 data_colors = {
-    "Not open": "tab:red",
-    "On request": "#FFC300",  # bright dark yellow
-    "Open access": "tab:green",
+    "Not open": colors["red"],
+    "On request": colors["yellow"],
+    "Open access": colors["green"],
 }
 
 subcategory_year_counts = (

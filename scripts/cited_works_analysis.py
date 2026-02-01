@@ -7,9 +7,9 @@ Created on Thu Sep 18 17:25:55 2025
 
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 from pathlib import Path
 import warnings
+from colors import plain_colors as colors
 
 # Suppress pandas SettingWithCopyWarning and UserWarning for chained indexing
 warnings.simplefilter(action="ignore", category=UserWarning)
@@ -88,18 +88,18 @@ trend_data = group_trend(
 # 5. Define fixed colors for consistent legend
 # -------------------------
 paper_colors = {
-    "Not open": "tab:red",
-    "Open access": "tab:green",
+    "Not open": colors["red"],
+    "Open access": colors["green"],
 }
 code_colors = {
-    "Not open": "tab:red",
-    "On request": "#FFC300",  # bright dark yellow
-    "Open access": "tab:green",
+    "Not open": colors["red"],
+    "On request": colors["yellow"],
+    "Open access": colors["green"],
 }
 data_colors = {
-    "Not open": "tab:red",
-    "On request": "#FFC300",  # bright dark yellow
-    "Open access": "tab:green",
+    "Not open": colors["red"],
+    "On request": colors["yellow"],
+    "Open access": colors["green"],
 }
 ai_colors = {
     "No": "tab:pink",
@@ -325,5 +325,5 @@ ax.set_ylabel("Proportion")
 ax.set_xlabel("Year")
 ax.legend(title="Data Availability", bbox_to_anchor=(1, 1))
 plt.tight_layout()
-plt.savefig(save_folder / "cited_works_data_availability.png", dpi=dpi)
+# plt.savefig(save_folder / "cited_works_data_availability.png", dpi=dpi)
 plt.show()
